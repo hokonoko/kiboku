@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>亀卜シミュレーター</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #17140f;
+    color: #e8e0cf;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    display: flex;
+    justify-content: center;
+  }
+  main { width: min(96vw, 780px); padding: 16px 0 40px; }
+  h1 { font-size: 20px; text-align: center; letter-spacing: .25em; margin: 12px 0 4px; }
+  .sub { text-align: center; font-size: 12px; color: #9a8f78; margin: 0 0 12px; }
+  #stage { position: relative; }
+  canvas {
+    display: block;
+    width: 100%;
+    background: #211c14;
+    border-radius: 12px;
+    cursor: crosshair;
+  }
+  #result {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    width: 270px;
+    background: rgba(20, 16, 10, .9);
+    border: 1px solid #5a4a30;
+    border-radius: 10px;
+    padding: 12px 16px 14px;
+  }
+  #pattern { font-size: 11.5px; color: #c9b896; line-height: 1.6; margin: 0 0 8px; }
+  #tabs { display: flex; gap: 4px; margin-bottom: 6px; }
+  #tabs .tab {
+    flex: 1;
+    padding: 4px 0;
+    font-size: 11px;
+    background: #2a2318;
+    border: 1px solid #4a3d28;
+    border-radius: 6px;
+    color: #b0a188;
+  }
+  #tabs .tab.active { background: #4a3c26; color: #f0e6d0; border-color: #6b573a; }
+  #rank { font-size: 42px; font-weight: 700; text-align: center; margin: 2px 0 6px; }
+  #reasons { font-size: 12.5px; line-height: 1.7; margin: 8px 0; padding-left: 1.2em; }
+  #seedline { font-size: 11px; color: #9a8f78; margin-top: 6px; }
+  #result button { width: 100%; margin-top: 6px; }
+  #panel {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: rgba(36, 32, 23, .6);
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-top: 12px;
+  }
+  label { font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  input[type=range] { width: 140px; accent-color: #d78a3c; }
+  .val { font-size: 12px; color: #9a8f78; width: 2.2em; text-align: right; }
+  button {
+    background: #3a2f1e;
+    color: #f0e6d0;
+    border: 1px solid #6b573a;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { background: #4a3c26; }
+  #hint { width: 100%; font-size: 12px; color: #9a8f78; margin: 2px 0 0; transition: color .2s; }
+</style>
+</head>
+<body>
+<main>
+  <h1>亀卜シミュレーター</h1>
+  <p class="sub">腹甲を灼き、卜兆（ひび）で吉凶を読む — 古代日本の占い</p>
+  <div id="stage">
+    <canvas id="cv" width="720" height="820"></canvas>
+    <div id="result" hidden>
+      <p id="pattern"></p>
+      <div id="tabs"></div>
+      <div id="rank"></div>
+      <ul id="reasons"></ul>
+      <div id="seedline"></div>
+      <button id="savepng">画像を保存</button>
+      <button id="again">同じ条件でもう一度</button>
+      <button id="reset2">占い直す</button>
+    </div>
+  </div>
+  <div id="panel">
+    <label>強さ <input type="range" id="strength" min="0" max="100" value="60"><span class="val" id="strengthV">60</span></label>
+    <label>時間 <input type="range" id="duration" min="0" max="100" value="60"><span class="val" id="durationV">60</span></label>
+    <button id="reset">占い直す</button>
+    <button id="mute">音: ON</button>
+    <p id="hint">腹甲の内側をクリックすると、灼いたひび（卜兆）が現れます。</p>
+  </div>
+</main>
+<script src="src/core.js"></script>
+<script src="src/sim.js"></script>
+<script src="src/fortune.js"></script>
+<script src="src/plastron.js"></script>
+<script src="src/effects.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>

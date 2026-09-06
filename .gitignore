@@ -1,0 +1,12 @@
+# OS / editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+
+# OneDrive / Office temp files
+~$*
+*.tmp
+
+# Node (tools only, not used at runtime)
+node_modules/
