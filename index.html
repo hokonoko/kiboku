@@ -10,7 +10,13 @@
 <meta property="og:title" content="亀卜シミュレーター">
 <meta property="og:description" content="古代中国の占術「亀卜」をブラウザで再現。亀甲に灼を描き、ひび割れの結果を占います。">
 <meta property="og:url" content="https://hokonoko.github.io/kiboku/">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://hokonoko.github.io/kiboku/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="亀卜シミュレーターの亀甲とひび割れのイメージ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#17140f">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -83,6 +89,51 @@
   }
   button:hover { background: #4a3c26; }
   #hint { width: 100%; font-size: 12px; color: #9a8f78; margin: 2px 0 0; transition: color .2s; }
+  label.wish { flex: 1 1 100%; }
+  #wish {
+    flex: 1;
+    min-width: 0;
+    background: #211c14;
+    color: #f0e6d0;
+    border: 1px solid #4a3d28;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+  #wish::placeholder { color: #6f6350; }
+  #wishline { font-size: 12px; color: #d9c69a; margin: 0 0 8px; line-height: 1.6; }
+  #wishline[hidden] { display: none; }
+  #shareRow { display: flex; gap: 6px; }
+  #shareRow button { flex: 1; margin-top: 6px; padding: 8px 4px; font-size: 12px; }
+  #copyDone { font-size: 11px; color: #a9c48a; min-height: 1.4em; margin: 4px 0 0; }
+  #copyDone[hidden] { display: none; }
+
+  /* ---- 履歴 ---- */
+  #history { margin-top: 20px; font-size: 13px; }
+  #history h2 { font-size: 14px; color: #e8d8ae; letter-spacing: .1em; margin: 0 0 8px; }
+  #historyList { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  #historyList button {
+    width: 100%;
+    text-align: left;
+    font-size: 12.5px;
+    padding: 8px 12px;
+  }
+  #historyList .h-rank { font-weight: 700; margin-right: 6px; }
+  #historyList .h-date { color: #9a8f78; font-size: 11px; margin-left: 6px; }
+  #historyClear { font-size: 12px; padding: 6px 12px; }
+  #historyEmpty { font-size: 12px; color: #9a8f78; margin: 0 0 8px; }
+
+  /* ---- モバイル: 結果パネルをCanvasの下に逃がす ---- */
+  @media (max-width: 640px) {
+    #stage { display: flex; flex-direction: column; }
+    #result {
+      position: static;
+      width: auto;
+      margin-top: 8px;
+    }
+    #rank { font-size: 34px; }
+    label.wish { flex-basis: 100%; }
+  }
 
   /* ---- チュートリアルポップアップ ---- */
   #tutorial {
@@ -168,6 +219,7 @@
     <canvas id="cv" width="720" height="820"></canvas>
     <div id="result" hidden>
       <p id="pattern"></p>
+      <p id="wishline" hidden></p>
       <div id="tabs"></div>
       <div id="rank"></div>
       <ul id="reasons"></ul>
@@ -175,16 +227,29 @@
       <button id="savepng">画像を保存</button>
       <button id="again">同じ条件でもう一度</button>
       <button id="reset2">占い直す</button>
+      <div id="shareRow">
+        <button id="copyLink">共有リンクをコピー</button>
+        <button id="shareX">Xで共有</button>
+      </div>
+      <p id="copyDone" hidden>コピーしました</p>
     </div>
   </div>
   <div id="panel">
     <label>強さ <input type="range" id="strength" min="0" max="100" value="60"><span class="val" id="strengthV">60</span></label>
     <label>時間 <input type="range" id="duration" min="0" max="100" value="60"><span class="val" id="durationV">60</span></label>
+    <label class="wish">願い事 <input type="text" id="wish" maxlength="60" placeholder="例: 明日の面接がうまくいくか" autocomplete="off"></label>
     <button id="reset">占い直す</button>
     <button id="mute">音: ON</button>
     <button id="help" type="button">使い方</button>
     <p id="hint">腹甲の内側をクリックすると、灼いたひび（卜兆）が現れます。</p>
   </div>
+
+  <section id="history" hidden>
+    <h2>最近の占い</h2>
+    <p id="historyEmpty" hidden>まだ履歴がありません。</p>
+    <ul id="historyList"></ul>
+    <button id="historyClear">履歴を消す</button>
+  </section>
 
   <article id="about">
     <h2>亀卜（きぼく）とは？</h2>

@@ -31,6 +31,16 @@
   const durationVEl = document.getElementById('durationV');
   const hintEl = document.getElementById('hint');
   const muteEl = document.getElementById('mute');
+  const wishEl = document.getElementById('wish');
+  const wishlineEl = document.getElementById('wishline');
+  const copyLinkEl = document.getElementById('copyLink');
+  const shareXEl = document.getElementById('shareX');
+  const copyDoneEl = document.getElementById('copyDone');
+  const historySectionEl = document.getElementById('history');
+  const historyListEl = document.getElementById('historyList');
+  const historyEmptyEl = document.getElementById('historyEmpty');
+  const HISTORY_KEY = 'kiboku-history-v1';
+  const HISTORY_MAX = 10;
 
   // --- 腹甲 ---
   const PLASTRON = K.buildPlastronPath();
@@ -215,6 +225,14 @@
     const pat = K.classifyPattern(sim.metrics);
     currentPattern = pat;
     patternEl.textContent = '【' + pat.name + '】' + pat.description;
+    const wish = getWish();
+    if (wish) {
+      wishlineEl.textContent = '願い事: ' + wish;
+      wishlineEl.hidden = false;
+    } else {
+      wishlineEl.textContent = '';
+      wishlineEl.hidden = true;
+    }
     interpCache = {};
     CATEGORIES.forEach(function (cat) {
       interpCache[cat.key] = K.interpretFortune(sim.metrics, cat.key);
@@ -232,12 +250,132 @@
     resultEl.hidden = false;
     highlightT = 0;
     K.audio.resultChime(interpCache.overall.rank);
+    saveHistory({
+      seed: lastSnap.seed, x: lastSnap.x, y: lastSnap.y,
+      strength: lastSnap.strength, duration: lastSnap.duration,
+      wish: wish, rank: interpCache.overall.rank,
+      score: interpCache.overall.score, pattern: pat.name, t: Date.now()
+    });
+  }
+
+  // --- 願い事・共有・履歴 ---
+  function getWish() {
+    return wishEl ? (wishEl.value || '').trim().slice(0, 60) : '';
+  }
+
+  function buildShareURL() {
+    if (!lastSnap) return location.href;
+    const base = location.href.split('?')[0].split('#')[0];
+    return base + K.buildShareQuery(lastSnap, getWish());
+  }
+
+  let copyDoneTimer = null;
+  function flashCopyDone(text) {
+    copyDoneEl.textContent = text;
+    copyDoneEl.hidden = false;
+    if (copyDoneTimer) clearTimeout(copyDoneTimer);
+    copyDoneTimer = setTimeout(function () { copyDoneEl.hidden = true; }, 2000);
+  }
+
+  function copyShareLink() {
+    const url = buildShareURL();
+    function done() { flashCopyDone('コピーしました'); }
+    function fallback() {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); }
+      catch (e) { flashCopyDone(url); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  function shareToX() {
+    if (!lastSnap || !interpCache.overall || !currentPattern) return;
+    const wish = getWish();
+    const text = '亀卜: ' + interpCache.overall.rank + '【' + currentPattern.name + '】'
+      + (wish ? '「' + wish + '」' : '');
+    const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text)
+      + '&url=' + encodeURIComponent(buildShareURL());
+    window.open(url, '_blank', 'noopener');
+  }
+
+  function loadHistory() {
+    try {
+      const raw = window.localStorage.getItem(HISTORY_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistory(entry) {
+    try {
+      const arr = loadHistory();
+      arr.unshift(entry);
+      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(arr.slice(0, HISTORY_MAX)));
+    } catch (e) {
+      /* プライベートモード等では保存しない */
+    }
+    renderHistory();
+  }
+
+  function formatDate(t) {
+    try {
+      const d = new Date(t);
+      return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':'
+        + ('0' + d.getMinutes()).slice(-2);
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function renderHistory() {
+    const arr = loadHistory();
+    historySectionEl.hidden = false;
+    historyListEl.innerHTML = '';
+    historyEmptyEl.hidden = arr.length !== 0;
+    arr.forEach(function (h) {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      const label = document.createElement('span');
+      const rank = document.createElement('span');
+      rank.className = 'h-rank';
+      rank.textContent = h.rank || '';
+      rank.style.color = RANK_COLORS[h.rank] || '';
+      label.appendChild(rank);
+      label.appendChild(document.createTextNode((h.pattern || '')
+        + (h.wish ? '「' + h.wish + '」' : '')));
+      const date = document.createElement('span');
+      date.className = 'h-date';
+      date.textContent = formatDate(h.t);
+      b.appendChild(label);
+      b.appendChild(date);
+      b.addEventListener('click', function () {
+        strengthEl.value = h.strength;
+        durationEl.value = h.duration;
+        if (wishEl) wishEl.value = h.wish || '';
+        syncLabels();
+        K.audio.resume();
+        runDivination(h.seed, h.x, h.y, h.strength, h.duration);
+      });
+      li.appendChild(b);
+      historyListEl.appendChild(li);
+    });
   }
 
   // --- 操作 ---
   function runDivination(seed, x, y, strength, duration) {
     sim = K.simulateCracks({ seed: seed, x: x, y: y, strength: strength, duration: duration, isInside: isInsidePlastron });
-    lastSnap = { seed: seed, x: x, y: y, strength: strength, duration: duration };
+    lastSnap = { seed: seed, x: x, y: y, strength: strength, duration: duration, wish: getWish() };
     resultEl.hidden = true;
     heatT = 0;
     heatDur = Math.round(60 + (K.clamp(duration, 0, 100) / 100) * 180);
@@ -287,6 +425,7 @@
     if (!lastSnap) return;
     strengthEl.value = lastSnap.strength;
     durationEl.value = lastSnap.duration;
+    if (wishEl && lastSnap.wish !== undefined) wishEl.value = lastSnap.wish;
     syncLabels();
     K.audio.resume();
     runDivination(lastSnap.seed, lastSnap.x, lastSnap.y, lastSnap.strength, lastSnap.duration);
@@ -308,7 +447,8 @@
   }
 
   function buildExportCanvas() {
-    const FOOTER_H = 220;
+    const wish = getWish();
+    const FOOTER_H = wish ? 246 : 220;
     const out = document.createElement('canvas');
     out.width = LW * DPR;
     out.height = (LH + FOOTER_H) * DPR;
@@ -339,6 +479,11 @@
     c.fillStyle = '#c9b896';
     c.font = '600 18px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
     let yy = wrapText(c, '【' + currentPattern.name + '】' + currentPattern.description, rx, LH + 34, maxW, 26);
+    if (wish) {
+      c.fillStyle = '#d9c69a';
+      c.font = '600 16px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
+      yy = wrapText(c, '願い事: ' + wish, rx, yy + 2, maxW, 24);
+    }
 
     c.fillStyle = '#e8e0cf';
     c.font = '15px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
@@ -365,6 +510,29 @@
   });
   strengthEl.addEventListener('input', syncLabels);
   durationEl.addEventListener('input', syncLabels);
+  copyLinkEl.addEventListener('click', copyShareLink);
+  shareXEl.addEventListener('click', shareToX);
+  document.getElementById('historyClear').addEventListener('click', function () {
+    try { window.localStorage.removeItem(HISTORY_KEY); } catch (e) { /* ignore */ }
+    renderHistory();
+  });
+
+  // --- 共有URLからの復元 (?seed=&x=&y=&s=&d=&q=) ---
+  function restoreFromQuery() {
+    let q = null;
+    try {
+      q = K.parseShareQuery(location.search);
+    } catch (e) {
+      q = null;
+    }
+    if (!q) return;
+    if (!isInsidePlastron(q.x, q.y)) return;
+    strengthEl.value = q.strength;
+    durationEl.value = q.duration;
+    if (wishEl && q.wish) wishEl.value = q.wish;
+    syncLabels();
+    runDivination(q.seed, q.x, q.y, q.strength, q.duration);
+  }
 
   // --- メインループ ---
   function frame() {
@@ -398,5 +566,7 @@
     requestAnimationFrame(frame);
   }
   syncLabels();
+  renderHistory();
+  restoreFromQuery();
   requestAnimationFrame(frame);
 })(window.Kiboku);
