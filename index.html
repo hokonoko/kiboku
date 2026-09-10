@@ -83,6 +83,81 @@
   }
   button:hover { background: #4a3c26; }
   #hint { width: 100%; font-size: 12px; color: #9a8f78; margin: 2px 0 0; transition: color .2s; }
+
+  /* ---- チュートリアルポップアップ ---- */
+  #tutorial {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(12, 9, 5, .72);
+  }
+  #tutorial[hidden] { display: none; }
+  .tut-card {
+    position: relative;
+    width: min(100%, 440px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    background: #241f17;
+    border: 1px solid #6b573a;
+    border-radius: 14px;
+    padding: 24px 26px 18px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+    animation: tut-in .25s ease-out;
+  }
+  @keyframes tut-in {
+    from { opacity: 0; transform: translateY(10px) scale(.98); }
+    to { opacity: 1; transform: none; }
+  }
+  .tut-card h2 { font-size: 17px; color: #f0e6d0; margin: 0 0 10px; letter-spacing: .06em; }
+  .tut-card p { font-size: 13.5px; line-height: 1.9; color: #c9bda6; margin: 0 0 18px; }
+  .tut-card .tut-kicker { font-size: 11px; color: #b08d52; letter-spacing: .18em; margin: 0 0 8px; }
+  .tut-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #9a8f78;
+    font-size: 20px;
+    line-height: 1;
+  }
+  .tut-close:hover { background: #3a2f1e; color: #f0e6d0; }
+  .tut-dots { display: flex; gap: 6px; margin-bottom: 14px; }
+  .tut-dots span { width: 7px; height: 7px; border-radius: 50%; background: #4a3d28; }
+  .tut-dots span.on { background: #d78a3c; }
+  .tut-actions { display: flex; align-items: center; gap: 6px; }
+  .tut-actions .spacer { flex: 1; }
+  .tut-ghost { background: none; border: none; color: #9a8f78; padding: 8px 10px; }
+  .tut-ghost:hover { background: #2a2318; color: #f0e6d0; }
+  .tut-ghost:disabled { visibility: hidden; }
+  .tut-primary { background: #6b4b22; border-color: #a97c3f; }
+  .tut-primary:hover { background: #7d5929; }
+
+  /* ---- 解説記事 ---- */
+  #about {
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid #3a2f1e;
+    font-size: 13.5px;
+    line-height: 1.95;
+    color: #b9ad95;
+  }
+  #about h2 { font-size: 16px; color: #e8d8ae; letter-spacing: .1em; margin: 0 0 12px; }
+  #about h3 { font-size: 14px; color: #d9c69a; letter-spacing: .06em; margin: 24px 0 8px; }
+  #about p { margin: 0 0 12px; }
+  #about ol, #about ul { margin: 0 0 12px; padding-left: 1.4em; }
+  #about li { margin-bottom: 4px; }
+  #about strong { color: #e8e0cf; font-weight: 600; }
+  #about .pattern-list { list-style: none; padding-left: 0; }
+  #about .pattern-list li { margin-bottom: 0; padding: 5px 0 5px 12px; border-left: 2px solid #4a3d28; }
+  #about .note { font-size: 12px; color: #8f8570; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -107,15 +182,66 @@
     <label>時間 <input type="range" id="duration" min="0" max="100" value="60"><span class="val" id="durationV">60</span></label>
     <button id="reset">占い直す</button>
     <button id="mute">音: ON</button>
+    <button id="help" type="button">使い方</button>
     <p id="hint">腹甲の内側をクリックすると、灼いたひび（卜兆）が現れます。</p>
   </div>
+
+  <article id="about">
+    <h2>亀卜（きぼく）とは？</h2>
+    <p>亀卜は、亀の腹甲（ふっこう）に熱を加えて生じるひび割れ「卜兆（ぼくちょう）」を読み、吉凶を占う古代の占術です。起源は古代中国にさかのぼり、殷（商）の時代には国家の大事を占う最も神聖な占いとして行われていました。占いの結果は亀甲や獣骨に刻まれ、のちの甲骨文字になります。漢字の「卜」は、このとき走るひびの形をかたどった象形文字とも言われています。</p>
+    <p>日本では古墳時代の遺跡から亀甲を使った卜甲が出土しており、中国大陸から朝鮮半島を経て伝わったと考えられています。律令国家のもとでは、対馬・壱岐・伊豆の「卜部（うらべ）」が神祇官に属し、祀るべき神や祭の日時、都の場所といった国家の重大事を亀甲で占っていました。長崎県対馬市の雷神社には「亀卜神事」が今も伝わり、国選択無形民俗文化財に指定されています。</p>
+
+    <h3>占いのしくみ</h3>
+    <ol>
+      <li>腹甲の内側に、表まで届かない浅いくぼみを削る</li>
+      <li>くぼみに、火で熱した桜の木片などを当てる</li>
+      <li>「パキッ」と音を立てて、表側にひびが走る</li>
+      <li>ひびの向き・長さ・枝分かれを読んで吉凶を判断する</li>
+    </ol>
+    <p>日本には鹿の肩胛骨を焼く「太占（ふとまに）」が先にあり、貴重な亀甲を使う亀卜は国家レベルの占いとして重んじられました。</p>
+
+    <h3>このシミュレーターの読み方</h3>
+    <ul>
+      <li><strong>腹甲をクリック</strong> — クリックした場所が灼かれ、ひびが成長します</li>
+      <li><strong>強さ</strong> — 熱の強さ。大きいほど枝分かれ（脇のひび）が増えます</li>
+      <li><strong>時間</strong> — 灼く時間。長いほど主線が長く伸びます</li>
+    </ul>
+    <p>結果では、ひびの形を6つの「型」に分類し、総合・仕事・恋愛・健康の4カテゴリで吉凶を判定します。</p>
+    <ul class="pattern-list">
+      <li><strong>直達型</strong> — 主筋が真っ直ぐで枝も上向き。勢いのある卜兆。</li>
+      <li><strong>昇枝型</strong> — 枝の多くが上を向く。物事が上向きに進む兆し。</li>
+      <li><strong>分岐型</strong> — 左右にバランスよく枝が分かれる。選択肢が豊かな時。</li>
+      <li><strong>中庸型</strong> — 突出した特徴のない穏やかな卜兆。平穏な運気。</li>
+      <li><strong>垂蔭型</strong> — 枝が垂れ下がる。慎重さと休息が求められる時。</li>
+      <li><strong>細流型</strong> — 枝を持たず細く流れる。内なる声に耳を澄ませる時。</li>
+    </ul>
+    <p class="note">※ このページは亀卜の雰囲気を楽しむためのシミュレーターです。ひびの判定や吉凶の解釈は史実の文献に基づくものではなく、当サイト独自のものです。</p>
+  </article>
 </main>
+
+<div id="tutorial" hidden>
+  <div class="tut-card" role="dialog" aria-modal="true" aria-labelledby="tutTitle">
+    <button class="tut-close" id="tutClose" type="button" aria-label="閉じる">×</button>
+    <p class="tut-kicker" id="tutStep">使い方 1 / 3</p>
+    <h2 id="tutTitle"></h2>
+    <p id="tutBody"></p>
+    <div class="tut-dots" id="tutDots" aria-hidden="true"></div>
+    <div class="tut-actions">
+      <button class="tut-ghost" id="tutSkip" type="button">スキップ</button>
+      <span class="spacer"></span>
+      <button class="tut-ghost" id="tutBack" type="button">戻る</button>
+      <button class="tut-primary" id="tutNext" type="button">次へ</button>
+    </div>
+  </div>
+</div>
+
 <script src="src/core.js"></script>
 <script src="src/sim.js"></script>
 <script src="src/fortune.js"></script>
 <script src="src/plastron.js"></script>
 <script src="src/effects.js"></script>
 <script src="src/audio.js"></script>
+<script src="src/tutorial.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>
