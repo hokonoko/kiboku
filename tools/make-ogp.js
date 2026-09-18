@@ -1,5 +1,8 @@
 // OGP画像生成: 1200x630 の PNG を純Node（依存なし）で書き出す。
 // 使い方: node tools/make-ogp.js
+// 注意: このスクリプトは ogp.png をタイトル文字なしで上書きする。
+// 公開中の ogp.png にはタイトル文字入りへの編集が加えられているため、
+// 再生成した場合は PowerShell(System.Drawing) 等でタイトルを重ねてから commit すること。
 'use strict';
 const fs = require('fs');
 const path = require('path');

@@ -300,7 +300,8 @@
     if (!lastSnap || !interpCache.overall || !currentPattern) return;
     const wish = getWish();
     const text = '亀卜: ' + interpCache.overall.rank + '【' + currentPattern.name + '】'
-      + (wish ? '「' + wish + '」' : '');
+      + (wish ? '「' + wish + '」' : '')
+      + '\n#亀卜 #亀卜シミュレーター #占い';
     const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text)
       + '&url=' + encodeURIComponent(buildShareURL());
     window.open(url, '_blank', 'noopener');

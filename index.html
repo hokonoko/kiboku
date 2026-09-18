@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="google-site-verification" content="Gc3ySm89rvFCmuOI9HnXIlS_E80_WtW6GQcP2actlnE">
-<title>亀卜シミュレーター</title>
-<meta name="description" content="古代中国の占術「亀卜」をブラウザで再現するシミュレーター。Canvas上の亀甲に灼を描き、ひび割れ(卜)の結果を占います。">
+<title>亀卜シミュレーター - 古代の占術「亀卜」をブラウザで再現</title>
+<meta name="description" content="古代中国発の占術「亀卜（きぼく）」をブラウザで再現する無料シミュレーター。亀甲に灼を描いて卜兆（ひび割れ）を出し、6つの型から総合・仕事・恋愛・健康の吉凶を判定します。甲骨文字の起源になった占いの解説付き。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="亀卜シミュレーター">
 <meta property="og:description" content="古代中国の占術「亀卜」をブラウザで再現。亀甲に灼を描き、ひび割れの結果を占います。">
@@ -16,7 +16,63 @@
 <meta property="og:image:alt" content="亀卜シミュレーターの亀甲とひび割れのイメージ">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#17140f">
+<link rel="canonical" href="https://hokonoko.github.io/kiboku/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "亀卜シミュレーター",
+      "url": "https://hokonoko.github.io/kiboku/",
+      "applicationCategory": "EntertainmentApplication",
+      "operatingSystem": "Web",
+      "browserRequirements": "JavaScript対応ブラウザ",
+      "inLanguage": "ja",
+      "description": "古代中国発の占術「亀卜（きぼく）」をブラウザで再現する無料シミュレーター。亀甲に灼を描いて卜兆（ひび割れ）を出し、6つの型から吉凶を判定します。",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "亀卜（きぼく）とはどんな占いですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "亀の腹甲に火で熱した木片を当て、生じるひび割れ「卜兆（ぼくちょう）」の形から吉凶を読む古代の占術です。殷（商）時代の中国では国家の大事を占う最も神聖な占いとされ、その結果を亀甲や獣骨に刻んだ文字が甲骨文字です。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "日本に亀卜はいつ伝わりましたか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "古墳時代に中国大陸から朝鮮半島を経て伝わったと考えられています。律令国家では卜部（うらべ）が神祇官に属し、祀るべき神や祭の日時など国家の重大事を占いました。長崎県対馬市の雷神社には国選択無形民俗文化財の「亀卜神事」が今も伝わります。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "シミュレーターの使い方を教えてください。",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "願い事を入力して腹甲をクリックすると、灼いたひび（卜兆）が走ります。「強さ」で枝分かれの多さ、「時間」で主線の長さが変わり、ひびの形を6つの型に分類して総合・仕事・恋愛・健康の4カテゴリで吉凶を判定します。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "判定結果は史実どおりですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "ひびの型分類や吉凶の解釈は当サイト独自のもので、史実の文献に基づくものではありません。亀卜の雰囲気を楽しむためのシミュレーターです。"
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -209,6 +265,9 @@
   #about .pattern-list { list-style: none; padding-left: 0; }
   #about .pattern-list li { margin-bottom: 0; padding: 5px 0 5px 12px; border-left: 2px solid #4a3d28; }
   #about .note { font-size: 12px; color: #8f8570; margin-top: 16px; }
+  #about dl { margin: 0 0 12px; }
+  #about dt { margin-top: 12px; }
+  #about dd { margin: 4px 0 0; }
 </style>
 </head>
 <body>
@@ -281,6 +340,18 @@
       <li><strong>細流型</strong> — 枝を持たず細く流れる。内なる声に耳を澄ませる時。</li>
     </ul>
     <p class="note">※ このページは亀卜の雰囲気を楽しむためのシミュレーターです。ひびの判定や吉凶の解釈は史実の文献に基づくものではなく、当サイト独自のものです。</p>
+
+    <h3>よくある質問</h3>
+    <dl>
+      <dt><strong>Q. 亀卜（きぼく）とはどんな占いですか？</strong></dt>
+      <dd>亀の腹甲に火で熱した木片を当て、生じるひび割れ「卜兆（ぼくちょう）」の形から吉凶を読む古代の占術です。殷（商）時代の中国では国家の大事を占う最も神聖な占いとされ、その結果を亀甲や獣骨に刻んだ文字が甲骨文字です。</dd>
+      <dt><strong>Q. 日本に亀卜はいつ伝わりましたか？</strong></dt>
+      <dd>古墳時代に中国大陸から朝鮮半島を経て伝わったと考えられています。律令国家では卜部（うらべ）が神祇官に属し、祀るべき神や祭の日時など国家の重大事を占いました。長崎県対馬市の雷神社には国選択無形民俗文化財の「亀卜神事」が今も伝わります。</dd>
+      <dt><strong>Q. シミュレーターの使い方を教えてください。</strong></dt>
+      <dd>願い事を入力して腹甲をクリックすると、灼いたひび（卜兆）が走ります。「強さ」で枝分かれの多さ、「時間」で主線の長さが変わり、ひびの形を6つの型に分類して総合・仕事・恋愛・健康の4カテゴリで吉凶を判定します。</dd>
+      <dt><strong>Q. 判定結果は史実どおりですか？</strong></dt>
+      <dd>ひびの型分類や吉凶の解釈は当サイト独自のもので、史実の文献に基づくものではありません。亀卜の雰囲気を楽しむためのシミュレーターです。</dd>
+    </dl>
   </article>
 </main>
 
