@@ -244,11 +244,28 @@
     head.className = 'oracle-head';
     head.textContent = '卜辞（ぼくじ）';
     oracleEl.appendChild(head);
-    o.lines.forEach(function (line) {
-      const div = document.createElement('span');
-      div.className = 'oracle-line';
-      div.textContent = line;
-      oracleEl.appendChild(div);
+    // 日本語訳を太めの本文に、漢文原文を小さな併記として表示する
+    const pairs = o.pairs || (o.lines || []).map(function (l) { return { ja: l, src: '' }; });
+    pairs.forEach(function (p) {
+      const pair = document.createElement('span');
+      pair.className = 'oracle-pair';
+      const ja = document.createElement('span');
+      ja.className = 'oracle-line';
+      ja.textContent = p.ja;
+      pair.appendChild(ja);
+      if (p.src) {
+        const src = document.createElement('span');
+        src.className = 'oracle-src';
+        const tag = document.createElement('span');
+        tag.className = 'oracle-tag';
+        tag.textContent = p.label || '原文';
+        src.appendChild(tag);
+        const srcText = document.createElement('span');
+        srcText.textContent = p.src;
+        src.appendChild(srcText);
+        pair.appendChild(src);
+      }
+      oracleEl.appendChild(pair);
     });
     const gloss = document.createElement('span');
     gloss.className = 'oracle-gloss';
@@ -525,31 +542,50 @@
 
   function buildExportCanvas() {
     const wish = getWish();
-    const FOOTER_H = wish ? 316 : 290;
+    const interp = interpCache[currentCategory];
+    const usable = !!(interp && lastSnap);
+    const minFooter = wish ? 316 : 290;
+    let footerH = minFooter;
+
+    // まず描画内容から高さを実測し、原文併記でも溢れないフッター高さを決める
+    if (usable) {
+      const probe = document.createElement('canvas');
+      probe.width = LW * DPR;
+      probe.height = (LH + minFooter) * DPR;
+      const pc = probe.getContext('2d');
+      pc.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const endY = drawFooter(pc, wish, interp, minFooter, false);
+      footerH = Math.max(minFooter, Math.ceil(endY - LH + 16));
+    }
+
     const out = document.createElement('canvas');
     out.width = LW * DPR;
-    out.height = (LH + FOOTER_H) * DPR;
+    out.height = (LH + footerH) * DPR;
     const c = out.getContext('2d');
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
     c.drawImage(cv, 0, 0, LW, LH);
+    if (usable) drawFooter(c, wish, interp, footerH, true);
+    return out;
+  }
 
-    const interp = interpCache[currentCategory];
-    if (!interp || !lastSnap) return out;
-
-    c.fillStyle = '#17140f';
-    c.fillRect(0, LH, LW, FOOTER_H);
-    c.strokeStyle = '#5a4a30';
-    c.lineWidth = 2;
-    c.beginPath();
-    c.moveTo(0, LH + 1);
-    c.lineTo(LW, LH + 1);
-    c.stroke();
+  // 結果フッター（ランク・型・理由・卜辞・シード）を描画し、描画した最終Yを返す
+  function drawFooter(c, wish, interp, footerH, paintBg) {
+    if (paintBg) {
+      c.fillStyle = '#17140f';
+      c.fillRect(0, LH, LW, footerH);
+      c.strokeStyle = '#5a4a30';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(0, LH + 1);
+      c.lineTo(LW, LH + 1);
+      c.stroke();
+    }
 
     c.textBaseline = 'middle';
     c.fillStyle = RANK_COLORS[interp.rank] || '#e8e0cf';
     c.font = '700 64px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
     c.textAlign = 'center';
-    c.fillText(interp.rank, 110, LH + FOOTER_H / 2);
+    c.fillText(interp.rank, 110, LH + footerH / 2);
 
     c.textAlign = 'left';
     const rx = 220, maxW = LW - rx - 24;
@@ -568,31 +604,43 @@
       yy = wrapText(c, r, rx, yy + 2, maxW, 22);
     }
 
-    // 卜辞（叙辞・命辞・占辞・驗辞）
+    // 卜辞（叙辞・命辞・占辞・驗辞）— 日本語訳に漢文原文を小さく併記
     try {
       const o = K.classics.buildOracleText({
         seed: lastSnap.seed, category: currentCategory, rank: interp.rank, wish: wish
       });
-      yy += 6;
+      const pairs = o.pairs || (o.lines || []).map(function (l) { return { ja: l, src: '' }; });
+      yy += 8;
       c.fillStyle = '#b08d52';
       c.font = '600 13px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
       c.fillText('卜辞', rx, yy);
-      yy += 4;
-      c.fillStyle = '#d9c69a';
-      c.font = '15px "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif';
-      for (const line of o.lines) {
-        yy = wrapText(c, line, rx, yy + 2, maxW, 24);
+      yy += 6;
+      for (const p of pairs) {
+        c.fillStyle = '#d9c69a';
+        c.font = '15px "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif';
+        yy = wrapText(c, p.ja, rx, yy + 2, maxW, 24);
+        if (p.src) {
+          const tag = (p.label || '原文') + ' ';
+          c.fillStyle = '#a3854e';
+          c.font = '600 11px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
+          const tagW = c.measureText(tag).width;
+          c.fillText(tag, rx, yy + 2);
+          c.fillStyle = '#8f8570';
+          c.font = '11px "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif';
+          yy = wrapText(c, p.src, rx + tagW, yy + 2, maxW - tagW, 16);
+        }
       }
     } catch (e) { /* 文献データ未読込時は省略 */ }
 
     const ang = sim && sim.metrics ? sim.metrics.avgBranchAngleDeg : null;
     c.fillStyle = '#9a8f78';
     c.font = '13px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
+    const seedY = Math.min(yy + 10, LH + footerH - 14);
     c.fillText('シード: ' + lastSnap.seed
       + ' ／ スコア: ' + interp.score
       + (ang === null ? '' : ' ／ 夾角: ' + Math.round(ang) + '°'),
-      rx, Math.min(yy + 8, LH + FOOTER_H - 14));
-    return out;
+      rx, seedY);
+    return seedY + 14;
   }
 
   document.getElementById('savepng').addEventListener('click', function () {

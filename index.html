@@ -100,20 +100,28 @@
     right: 12px;
     bottom: 12px;
     width: 270px;
+    max-height: calc(100% - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #5a4a30 transparent;
     background: rgba(20, 16, 10, .9);
     border: 1px solid #5a4a30;
     border-radius: 10px;
     padding: 12px 16px 14px;
   }
+  #result::-webkit-scrollbar { width: 6px; }
+  #result::-webkit-scrollbar-track { background: transparent; }
+  #result::-webkit-scrollbar-thumb { background: #5a4a30; border-radius: 3px; }
   #pattern { font-size: 11.5px; color: #c9b896; line-height: 1.6; margin: 0 0 8px; }
   #oracle {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 5px;
     background: rgba(58, 46, 28, .45);
     border-left: 2px solid #6b573a;
     border-radius: 4px;
-    padding: 7px 9px;
+    padding: 7px 9px 8px;
     margin: 0 0 8px;
   }
   #oracle[hidden] { display: none; }
@@ -121,15 +129,39 @@
     font-size: 10px;
     letter-spacing: .18em;
     color: #b08d52;
-    margin-bottom: 2px;
   }
+  #oracle .oracle-pair { display: flex; flex-direction: column; }
   #oracle .oracle-line {
-    font-size: 14px;
-    line-height: 1.65;
+    font-size: 13.5px;
+    line-height: 1.5;
     color: #e6d9b8;
     font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif;
   }
-  #oracle .oracle-gloss { font-size: 11px; color: #9a8f78; margin-top: 3px; line-height: 1.5; }
+  #oracle .oracle-src {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 10px;
+    line-height: 1.45;
+    letter-spacing: .02em;
+    color: #8b7f66;
+    margin-top: 1px;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif;
+  }
+  #oracle .oracle-tag {
+    flex: none;
+    font-size: 9.5px;
+    letter-spacing: .08em;
+    color: #a3854e;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+  }
+  #oracle .oracle-gloss {
+    font-size: 10.5px;
+    color: #9a8f78;
+    line-height: 1.5;
+    border-top: 1px solid rgba(107, 87, 58, .45);
+    padding-top: 5px;
+  }
   #tabs { display: flex; gap: 4px; margin-bottom: 6px; }
   #tabs .tab {
     flex: 1;
@@ -209,6 +241,8 @@
     #result {
       position: static;
       width: auto;
+      max-height: none;
+      overflow: visible;
       margin-top: 8px;
     }
     #rank { font-size: 34px; }
@@ -363,7 +397,7 @@
       <li><strong>驛兆（えき）</strong> — 「驛」は絶え絶え。主兆・枝が短く途切れがちな兆。</li>
       <li><strong>克兆（こく）</strong> — 「克」は相剋。枝が左右に偏り、互いに交錯し合う兆。</li>
     </ul>
-    <p>判定は5段階です。殷墟卜辞に見える<strong>「大吉」「吉」「不吉」</strong>と、対馬の亀卜神事で実際に用いられた<strong>「安」「並」</strong>を組み合わせています。結果パネルには、殷墟卜辞の四部構成にならって組み立てた<strong>卜辞</strong>（例：「癸巳に卜し、殻が貞す：これから十日間、禍はなきや？／王が占って曰く、吉。／まことに禍なし。」）も表示されます。</p>
+    <p>判定は5段階です。殷墟卜辞に見える<strong>「大吉」「吉」「不吉」</strong>と、対馬の亀卜神事で実際に用いられた<strong>「安」「並」</strong>を組み合わせています。結果パネルには、殷墟卜辞の四部構成にならって組み立てた<strong>卜辞</strong>（原文「癸巳卜，殻貞：旬亡禍？／王占曰：吉。／允亡禍。」を、訳「癸巳に卜し、殻が貞す：これから十日間、禍はなきや？／王が占って曰く、吉。／まことに禍なし。」と併記して表示）も表示されます。</p>
     <p class="note">※ 占いの手順・兆の分類・判定語・卜辞の文例は上記文献に基づきます。一方、ひびの生成シミュレーションと吉凶スコアの数値化、仕事・恋愛・健康といったカテゴリ分けは当サイト独自の再現です。殷代の吉凶判断に統一した法則は存在しなかったとされる点にご留意ください。</p>
 
     <h3>主な出典</h3>

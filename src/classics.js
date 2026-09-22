@@ -19,26 +19,29 @@
   const GUIRI = [];
   for (let i = 9; i < 60; i += 10) GUIRI.push(GANSHI[i]);
 
-  // 命辞（卜問の文）。殷墟卜辞の文例にならった再構成（表示は日本語訳）。
+  // 命辞（卜問の文）。殷墟卜辞の文例にならった再構成。
+  // text = 日本語訳 / src = 漢文原文 / gloss = 平易な説明
   const QUESTIONS = {
-    overall: { text: 'これから十日間、禍はなきや？', gloss: '＝これから十日間、禍（わざわい）はないかという問い' },
-    work: { text: '事業を興しても、禍はなきや？', gloss: '＝仕事を新たに始めてよいか、という問い' },
-    love: { text: 'この縁、嘉しきものとなるや？', gloss: '＝この縁取りは嘉しき結果になるか、という問い' },
-    health: { text: 'この病、憂いに足らざるや？', gloss: '＝この病は重いものではないか、という問い' }
+    overall: { text: 'これから十日間、禍はなきや？', src: '旬亡禍？', gloss: '＝今の10日間に禍はないかという問い' },
+    work: { text: '事業を興しても、禍はなきや？', src: '作邑，亡禍？', gloss: '＝仕事を始めてよいかという問い' },
+    love: { text: 'この縁、嘉しきものとなるや？', src: '娶婦，嘉？', gloss: '＝この縁は嘉しき結果になるか' },
+    health: { text: 'この病、憂いに足らざるや？', src: '有疾，亡憂？', gloss: '＝この病は重いものかという問い' }
   };
 
-  // 占辞（視兆の後の判断）。殷墟卜辞の語彙のみを使用（表示は日本語訳）。
+  // 占辞（視兆の後の判断）。殷墟卜辞の語彙のみを使用。ja = 訳 / src = 原文
   const ZHAN = {
-    '大吉': '王が占って曰く、大吉。',
-    '吉': '王が占って曰く、吉。',
-    '安': '王が占って曰く、吉。',
-    '並': '王が占って曰く、禍なし。',
-    '不吉': '王が占って曰く、不吉。'
+    '大吉': { ja: '王が占って曰く、大吉。', src: '王占曰：大吉。' },
+    '吉': { ja: '王が占って曰く、吉。', src: '王占曰：吉。' },
+    '安': { ja: '王が占って曰く、吉。', src: '王占曰：吉。' },
+    '並': { ja: '王が占って曰く、禍なし。', src: '王占曰：亡禍。' },
+    '不吉': { ja: '王が占って曰く、不吉。', src: '王占曰：不吉。' }
   };
 
-  // 驗辞（後の応験）
-  const YAN_OK = 'まことに禍なし。';
-  const YAN_NG = '十二日を経て、まことに禍あり。';
+  // 驗辞（後の応験）。ja = 訳 / src = 原文
+  const YAN = {
+    ok: { ja: 'まことに禍なし。', src: '允亡禍。' },
+    ng: { ja: '十二日を経て、まことに禍あり。', src: '旬有二日，允有禍。' }
+  };
 
   // 判定5段階。殷墟卜辞（大吉・吉・不吉）と対馬亀卜神事（安・並）に実際見える語。
   const RANKS = [
@@ -105,16 +108,27 @@
     const q = QUESTIONS[category] || QUESTIONS.overall;
     const rank = opts.rank || '吉';
     const xuci = day + 'に卜し、' + diviner + 'が貞す：';
+    const xuciSrc = day + '卜，' + diviner + '貞：';
     const zhan = ZHAN[rank] || ZHAN['吉'];
-    const yan = (rank === '不吉' || rank === '並') ? YAN_NG : YAN_OK;
+    const yan = (rank === '不吉' || rank === '並') ? YAN.ng : YAN.ok;
+    // 訳（日本語・太字表示）と漢文原文（小さい表示）の対
+    const pairs = [
+      { label: '叙辞・命辞', ja: xuci + q.text, src: xuciSrc + (q.src || q.text) },
+      { label: '占辞', ja: zhan.ja, src: zhan.src },
+      { label: '驗辞', ja: yan.ja, src: yan.src }
+    ];
     return {
-      lines: [xuci + q.text, zhan, yan],
-      text: xuci + q.text + '\n' + zhan + '\n' + yan,
+      lines: [pairs[0].ja, pairs[1].ja, pairs[2].ja],
+      original: [pairs[0].src, pairs[1].src, pairs[2].src],
+      pairs: pairs,
+      text: pairs[0].ja + '\n' + pairs[1].ja + '\n' + pairs[2].ja,
       day: day,
       diviner: diviner,
       question: q,
-      zhan: zhan,
-      yan: yan
+      zhan: zhan.ja,
+      zhanSrc: zhan.src,
+      yan: yan.ja,
+      yanSrc: yan.src
     };
   }
 
