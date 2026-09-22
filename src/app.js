@@ -2,7 +2,7 @@
 /* ===== UI: 状態機械・イベント配線・メインループ ===== */
 (function (K) {
   const LW = K.LW, LH = K.LH, PC = K.PC;
-  const RANK_COLORS = { '大吉': '#ffd75e', '吉': '#ff9d5c', '中吉': '#e8e0cf', '小吉': '#a9c48a', '凶': '#8fa0b3' };
+  const RANK_COLORS = { '大吉': '#ffd75e', '吉': '#ff9d5c', '安': '#cfe0a8', '並': '#e8e0cf', '不吉': '#8fa0b3' };
   const S = { IDLE: 'idle', HEATING: 'heating', CRACKING: 'cracking', RESULT: 'result' };
   const CATEGORIES = [
     { key: 'overall', label: '総合' },
@@ -22,6 +22,7 @@
   const resultEl = document.getElementById('result');
   const rankEl = document.getElementById('rank');
   const patternEl = document.getElementById('pattern');
+  const oracleEl = document.getElementById('oracle');
   const tabsEl = document.getElementById('tabs');
   const reasonsEl = document.getElementById('reasons');
   const seedlineEl = document.getElementById('seedline');
@@ -68,6 +69,10 @@
   let highlightT = 0;
   let crackleTimer = 0;
   let currentPattern = null;
+  let activeHollow = null;
+  let scorched = false;
+  let hoverPos = null;
+  let frameT = 0;
 
   // --- ひび描画 ---
   function strokePolyline(c, pts, rd) {
@@ -219,12 +224,43 @@
       li.textContent = r;
       reasonsEl.appendChild(li);
     });
+    renderOracle(interp.rank);
+  }
+
+  // 殷墟卜辞の四部構成（叙辞・命辞・占辞・驗辞）にならって占いの記録を組み立てる
+  function renderOracle(rank) {
+    if (!oracleEl || !lastSnap) return;
+    let o = null;
+    try {
+      o = K.classics.buildOracleText({
+        seed: lastSnap.seed, category: currentCategory, rank: rank, wish: getWish()
+      });
+    } catch (e) {
+      o = null;
+    }
+    if (!o) { oracleEl.hidden = true; return; }
+    oracleEl.innerHTML = '';
+    const head = document.createElement('span');
+    head.className = 'oracle-head';
+    head.textContent = '卜辞（ぼくじ）';
+    oracleEl.appendChild(head);
+    o.lines.forEach(function (line) {
+      const div = document.createElement('span');
+      div.className = 'oracle-line';
+      div.textContent = line;
+      oracleEl.appendChild(div);
+    });
+    const gloss = document.createElement('span');
+    gloss.className = 'oracle-gloss';
+    gloss.textContent = o.question.gloss;
+    oracleEl.appendChild(gloss);
+    oracleEl.hidden = false;
   }
 
   function showResult() {
     const pat = K.classifyPattern(sim.metrics);
     currentPattern = pat;
-    patternEl.textContent = '【' + pat.name + '】' + pat.description;
+    patternEl.textContent = '【' + pat.name + (pat.reading ? '（' + pat.reading + '）' : '') + '】' + pat.gloss;
     const wish = getWish();
     if (wish) {
       wishlineEl.textContent = '願い事: ' + wish;
@@ -246,7 +282,10 @@
     currentCategory = 'overall';
     buildTabs();
     showCategory();
-    seedlineEl.textContent = 'シード: ' + lastSnap.seed + ' ／ スコア: ' + interpCache.overall.score;
+    const ang = sim.metrics.avgBranchAngleDeg;
+    seedlineEl.textContent = 'シード: ' + lastSnap.seed
+      + ' ／ スコア: ' + interpCache.overall.score
+      + ' ／ 夾角: ' + (ang === null ? '—' : Math.round(ang) + '°');
     resultEl.hidden = false;
     highlightT = 0;
     K.audio.resultChime(interpCache.overall.rank);
@@ -301,8 +340,7 @@
     const wish = getWish();
     const text = '亀卜: ' + interpCache.overall.rank + '【' + currentPattern.name + '】'
       + (wish ? '「' + wish + '」' : '')
-      + '\n#亀卜 #亀卜シミュレーター #占い';
-    const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text)
+      + '\n#亀卜 #亀卜シミュレーター #占い';    const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text)
       + '&url=' + encodeURIComponent(buildShareURL());
     window.open(url, '_blank', 'noopener');
   }
@@ -375,7 +413,11 @@
 
   // --- 操作 ---
   function runDivination(seed, x, y, strength, duration) {
-    sim = K.simulateCracks({ seed: seed, x: x, y: y, strength: strength, duration: duration, isInside: isInsidePlastron });
+    // 灼は事前に穿たれた鑽・鑿の位置でしか行えない（殷の攻龜・鑽鑿に倣う）
+    const h = K.nearestHollow(x, y, 90);
+    const ox = h ? h.x : x, oy = h ? h.y : y;
+    activeHollow = h;
+    sim = K.simulateCracks({ seed: seed, x: ox, y: oy, strength: strength, duration: duration, isInside: isInsidePlastron });
     lastSnap = { seed: seed, x: x, y: y, strength: strength, duration: duration, wish: getWish() };
     resultEl.hidden = true;
     heatT = 0;
@@ -385,9 +427,33 @@
     baked = sim.polylines.map(function () { return false; });
     particles = K.createParticles();
     crackCtx.clearRect(0, 0, LW, LH);
+    scorched = false;
     crackleTimer = 0;
     state = S.HEATING;
     K.audio.startHum();
+  }
+
+  // 灼痕：兆の裏（施熱点）には円状の焦げが残る
+  function bakeScorch() {
+    if (scorched || !sim) return;
+    scorched = true;
+    const o = sim.origin;
+    crackCtx.save();
+    crackCtx.clip(PLASTRON);
+    const g = crackCtx.createRadialGradient(o.x, o.y, 1, o.x, o.y, 22);
+    g.addColorStop(0, 'rgba(46,26,12,0.88)');
+    g.addColorStop(0.55, 'rgba(74,42,18,0.62)');
+    g.addColorStop(1, 'rgba(96,58,26,0)');
+    crackCtx.fillStyle = g;
+    crackCtx.beginPath();
+    crackCtx.ellipse(o.x, o.y, 22, 20, 0, 0, Math.PI * 2);
+    crackCtx.fill();
+    crackCtx.strokeStyle = 'rgba(38,20,8,0.5)';
+    crackCtx.lineWidth = 2;
+    crackCtx.beginPath();
+    crackCtx.ellipse(o.x, o.y, 15, 13, 0, 0, Math.PI * 2);
+    crackCtx.stroke();
+    crackCtx.restore();
   }
 
   function resetAll() {
@@ -408,6 +474,16 @@
     if (hintTimer) clearTimeout(hintTimer);
     hintTimer = setTimeout(function () { hintEl.style.color = ''; }, 700);
   }
+
+  cv.addEventListener('mousemove', function (e) {
+    if (state !== S.IDLE) { hoverPos = null; return; }
+    const r = cv.getBoundingClientRect();
+    hoverPos = {
+      x: (e.clientX - r.left) / r.width * LW,
+      y: (e.clientY - r.top) / r.height * LH
+    };
+  });
+  cv.addEventListener('mouseleave', function () { hoverPos = null; });
 
   cv.addEventListener('click', function (e) {
     if (state !== S.IDLE) return;
@@ -449,7 +525,7 @@
 
   function buildExportCanvas() {
     const wish = getWish();
-    const FOOTER_H = wish ? 246 : 220;
+    const FOOTER_H = wish ? 316 : 290;
     const out = document.createElement('canvas');
     out.width = LW * DPR;
     out.height = (LH + FOOTER_H) * DPR;
@@ -492,9 +568,30 @@
       yy = wrapText(c, r, rx, yy + 2, maxW, 22);
     }
 
+    // 卜辞（叙辞・命辞・占辞・驗辞）
+    try {
+      const o = K.classics.buildOracleText({
+        seed: lastSnap.seed, category: currentCategory, rank: interp.rank, wish: wish
+      });
+      yy += 6;
+      c.fillStyle = '#b08d52';
+      c.font = '600 13px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
+      c.fillText('卜辞', rx, yy);
+      yy += 4;
+      c.fillStyle = '#d9c69a';
+      c.font = '15px "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif';
+      for (const line of o.lines) {
+        yy = wrapText(c, line, rx, yy + 2, maxW, 24);
+      }
+    } catch (e) { /* 文献データ未読込時は省略 */ }
+
+    const ang = sim && sim.metrics ? sim.metrics.avgBranchAngleDeg : null;
     c.fillStyle = '#9a8f78';
     c.font = '13px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
-    c.fillText('シード: ' + lastSnap.seed + ' ／ スコア: ' + interp.score, rx, Math.min(yy + 6, LH + FOOTER_H - 14));
+    c.fillText('シード: ' + lastSnap.seed
+      + ' ／ スコア: ' + interp.score
+      + (ang === null ? '' : ' ／ 夾角: ' + Math.round(ang) + '°'),
+      rx, Math.min(yy + 8, LH + FOOTER_H - 14));
     return out;
   }
 
@@ -539,14 +636,19 @@
   function frame() {
     ctx.drawImage(baseLayer, 0, 0, LW, LH);
     ctx.drawImage(crackLayer, 0, 0, LW, LH);
-    if (state === S.HEATING) {
+    if (state === S.IDLE) {
+      // 次に灼できる鑽・鑿を光らせて示す
+      const hv = hoverPos ? K.nearestHollow(hoverPos.x, hoverPos.y, 90) : null;
+      if (hv) K.drawActiveHollow(ctx, hv, 0.45 + 0.25 * Math.sin(frameT * 0.1));
+    } else if (state === S.HEATING) {
       heatT++;
+      if (activeHollow) K.drawActiveHollow(ctx, activeHollow, 0.6 + 0.3 * Math.sin(heatT * 0.2));
       K.drawHeating(ctx, sim.origin, heatT / heatDur, heatT);
       if (Math.random() < 0.5) K.spawnSmoke(particles, sim.origin.x, sim.origin.y, Math.random);
       if (Math.random() < 0.25) K.spawnSparks(particles, sim.origin.x, sim.origin.y, Math.random, 2);
       crackleTimer--;
       if (crackleTimer <= 0) { K.audio.emberCrackle(); crackleTimer = 6 + Math.floor(Math.random() * 18); }
-      if (heatT >= heatDur) { state = S.CRACKING; K.audio.stopHum(); }
+      if (heatT >= heatDur) { bakeScorch(); state = S.CRACKING; K.audio.stopHum(); }
     } else if (state === S.CRACKING) {
       K.drawHollow(ctx, sim.origin, 0.75);
       const done = advanceReveal();
@@ -564,6 +666,7 @@
     }
     K.updateParticles(particles);
     K.drawParticles(ctx, particles);
+    frameT++;
     requestAnimationFrame(frame);
   }
   syncLabels();

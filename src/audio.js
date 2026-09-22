@@ -96,8 +96,8 @@
   function resultChime(rank) {
     if (rank === '大吉') { tone(523, 0.9, 0.18); setTimeout(function () { tone(784, 1.1, 0.15); }, 180); }
     else if (rank === '吉') { tone(440, 0.8, 0.15); setTimeout(function () { tone(659, 0.9, 0.12); }, 160); }
-    else if (rank === '中吉') { tone(392, 0.8, 0.13); }
-    else if (rank === '小吉') { tone(330, 0.8, 0.12); }
+    else if (rank === '安') { tone(392, 0.8, 0.13); }
+    else if (rank === '並') { tone(349, 0.8, 0.12); }
     else { tone(196, 1.4, 0.16, 'triangle'); }
   }
 
