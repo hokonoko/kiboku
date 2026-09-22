@@ -245,7 +245,7 @@
     head.textContent = '卜辞（ぼくじ）';
     oracleEl.appendChild(head);
 
-    // まず分かりやすい説明文を大きく見せ、その下に訳と漢文原文を小さく並べる
+    // まず分かりやすい説明文を大きく見せ、その下に「訳＋漢文原文」を1行ずつ小さく並べる
     if (o.question && o.question.gloss) {
       const explain = document.createElement('span');
       explain.className = 'oracle-explain';
@@ -257,17 +257,14 @@
     pairs.forEach(function (p) {
       const pair = document.createElement('span');
       pair.className = 'oracle-pair';
-      const jaRow = document.createElement('span');
-      jaRow.className = 'oracle-ja';
       const tag = document.createElement('span');
       tag.className = 'oracle-tag';
-      tag.textContent = p.label || '訳';
-      jaRow.appendChild(tag);
+      tag.textContent = p.label || '卜辞';
+      pair.appendChild(tag);
       const ja = document.createElement('span');
       ja.className = 'oracle-line';
       ja.textContent = p.ja;
-      jaRow.appendChild(ja);
-      pair.appendChild(jaRow);
+      pair.appendChild(ja);
       if (p.src) {
         const src = document.createElement('span');
         src.className = 'oracle-src';
@@ -545,6 +542,45 @@
     return yy + lineH;
   }
 
+  // フォント違いの文字列を1つの段落として折り返し描画する。runs: [{ text, font, fillStyle }]
+  function wrapRuns(c, runs, x, y, maxW, lineH) {
+    const chars = [];
+    for (const r of runs) {
+      if (!r.text) continue;
+      c.font = r.font;
+      for (const ch of r.text) {
+        chars.push({ ch: ch, w: c.measureText(ch).width, font: r.font, fill: r.fillStyle });
+      }
+    }
+    const lines = [[]];
+    let lw = 0;
+    for (const it of chars) {
+      const cur = lines[lines.length - 1];
+      if (cur.length && lw + it.w > maxW) { lines.push([]); lw = 0; }
+      cur.push(it);
+      lw += it.w;
+    }
+    let yy = y;
+    for (const line of lines) {
+      let xx = x;
+      let i = 0;
+      while (i < line.length) {
+        const font = line[i].font, fill = line[i].fill;
+        let seg = '';
+        while (i < line.length && line[i].font === font && line[i].fill === fill) {
+          seg += line[i].ch;
+          i++;
+        }
+        c.font = font;
+        c.fillStyle = fill;
+        c.fillText(seg, xx, yy);
+        xx += c.measureText(seg).width;
+      }
+      yy += lineH;
+    }
+    return yy;
+  }
+
   function buildExportCanvas() {
     const wish = getWish();
     const interp = interpCache[currentCategory];
@@ -621,19 +657,11 @@
       c.fillText('卜辞', rx, yy);
       yy += 6;
       for (const p of pairs) {
-        c.fillStyle = '#d9c69a';
-        c.font = '15px "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif';
-        yy = wrapText(c, p.ja, rx, yy + 2, maxW, 24);
-        if (p.src) {
-          const tag = (p.label || '原文') + ' ';
-          c.fillStyle = '#a3854e';
-          c.font = '600 11px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
-          const tagW = c.measureText(tag).width;
-          c.fillText(tag, rx, yy + 2);
-          c.fillStyle = '#8f8570';
-          c.font = '11px "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif';
-          yy = wrapText(c, p.src, rx + tagW, yy + 2, maxW - tagW, 16);
-        }
+        yy = wrapRuns(c, [
+          { text: (p.label || '卜辞') + ' ', font: '600 11px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif', fillStyle: '#a3854e' },
+          { text: p.ja + ' ', font: '15px "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif', fillStyle: '#d9c69a' },
+          { text: p.src, font: '11px "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif', fillStyle: '#8f8570' }
+        ], rx, yy + 4, maxW, 24);
       }
     } catch (e) { /* 文献データ未読込時は省略 */ }
 

@@ -138,35 +138,29 @@
     border-bottom: 1px solid rgba(107, 87, 58, .5);
     padding-bottom: 7px;
   }
-  /* 以下は記録（訳と漢文原文）。控えめな補足として小さく抑える */
+  /* 以下は記録。1行の中に「タグ＋訳＋漢文原文」を続けて流す */
   #oracle .oracle-pair {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  #oracle .oracle-ja {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
+    font-size: 11px;
+    line-height: 1.7;
   }
   #oracle .oracle-tag {
-    flex: none;
+    display: inline-block;
     font-size: 9px;
     letter-spacing: .06em;
     color: #a3854e;
+    margin-right: 5px;
     font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
   }
   #oracle .oracle-line {
     font-size: 11px;
-    line-height: 1.55;
     color: #c4b99e;
     font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif;
   }
   #oracle .oracle-src {
     font-size: 9.5px;
-    line-height: 1.4;
     letter-spacing: .02em;
     color: #857a64;
+    margin-left: 6px;
     font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif;
   }
   #tabs { display: flex; gap: 4px; margin-bottom: 6px; }
