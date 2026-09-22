@@ -95,11 +95,12 @@
 
   // --- 鑽・鑿（事前に穿たれた凹み） ---
   // 内側列＝鑿（アーモンド形・深い溝）、外側列＝鑽（円形・浅い孔）
+  // 各帯の中央に置き、縫合線とかぶらせない
   function buildHollows() {
     const list = [];
-    const rows = 6;
+    const rows = BANDS.length - 1;
     for (let r = 0; r < rows; r++) {
-      const t = -0.70 + r * (1.40 / (rows - 1));
+      const t = (BANDS[r] + BANDS[r + 1]) / 2;
       const y = PC.y + t * PC.ry;
       const odd = r % 2 === 1;
       for (let s = 0; s < 2; s++) {
@@ -125,39 +126,52 @@
     return (best && bd <= lim) ? best : null;
   }
 
-  // 凹み: 左上から照らした場合の陰影（左上の内壁＝影、右下の内壁＝光）
+  // 穿ち口: 骨を削った「跡」。暗い穴ではなく、淡い削り跡として描く
   function drawHollowFeature(c, h) {
     c.save();
     c.translate(h.x, h.y);
 
+    // 浅い窪みの陰影（左上＝影／右下＝光）。濃い穴に見えないよう淡く抑える
     const g = c.createLinearGradient(-h.rx, -h.ry, h.rx, h.ry);
-    g.addColorStop(0, 'rgba(48,33,16,0.72)');
-    g.addColorStop(0.5, 'rgba(96,74,42,0.34)');
-    g.addColorStop(1, 'rgba(255,240,204,0.30)');
+    g.addColorStop(0, 'rgba(112,86,50,0.20)');
+    g.addColorStop(0.5, 'rgba(150,122,74,0.06)');
+    g.addColorStop(1, 'rgba(255,249,226,0.40)');
     c.fillStyle = g;
     c.beginPath();
     c.ellipse(0, 0, h.rx, h.ry, 0, 0, Math.PI * 2);
     c.fill();
 
-    // 底の暗部（深いほど中心寄りに暗い）
-    const depth = c.createRadialGradient(0, -h.ry * 0.12, 1, 0, -h.ry * 0.12, Math.max(h.rx, h.ry) * 0.85);
-    depth.addColorStop(0, 'rgba(36,23,10,0.55)');
-    depth.addColorStop(1, 'rgba(36,23,10,0)');
-    c.fillStyle = depth;
-    c.beginPath();
-    c.ellipse(0, -h.ry * 0.12, h.rx * 0.8, h.ry * 0.8, 0, 0, Math.PI * 2);
-    c.fill();
+    if (h.kind === 'drill') {
+      // 鑽: 円を回転させながら掘った同心の擦り跡
+      c.strokeStyle = 'rgba(94,68,36,0.22)';
+      c.lineWidth = 1;
+      for (let k = 1; k <= 3; k++) {
+        const s = k / 4;
+        c.beginPath();
+        c.ellipse(0, 0, h.rx * s, h.ry * s, 0, 0, Math.PI * 2);
+        c.stroke();
+      }
+    } else {
+      // 鑿: アーモンド形の溝の底
+      c.fillStyle = 'rgba(96,70,38,0.13)';
+      c.beginPath();
+      c.ellipse(0, 0.5, h.rx * 0.5, h.ry * 0.58, 0, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = 'rgba(94,68,36,0.28)';
+      c.lineWidth = 1;
+      c.stroke();
+    }
 
-    // 穿ち口の縁
-    c.strokeStyle = 'rgba(62,44,22,0.55)';
-    c.lineWidth = 1.3;
+    // 穿ち口の縁: 淡い骨の破面
+    c.strokeStyle = 'rgba(92,68,38,0.30)';
+    c.lineWidth = 1.2;
     c.beginPath();
     c.ellipse(0, 0, h.rx, h.ry, 0, 0, Math.PI * 2);
     c.stroke();
-    c.strokeStyle = 'rgba(255,246,214,0.35)';
+    c.strokeStyle = 'rgba(255,251,232,0.45)';
     c.lineWidth = 1;
     c.beginPath();
-    c.ellipse(0, 0.8, h.rx + 1, h.ry + 1, 0, Math.PI * 0.1, Math.PI * 0.9);
+    c.ellipse(0, 1, h.rx + 1, h.ry + 1, 0, Math.PI * 0.15, Math.PI * 0.85);
     c.stroke();
     c.restore();
   }
