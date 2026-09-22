@@ -244,33 +244,38 @@
     head.className = 'oracle-head';
     head.textContent = '卜辞（ぼくじ）';
     oracleEl.appendChild(head);
-    // 日本語訳を太めの本文に、漢文原文を小さな併記として表示する
+
+    // まず分かりやすい説明文を大きく見せ、その下に訳と漢文原文を小さく並べる
+    if (o.question && o.question.gloss) {
+      const explain = document.createElement('span');
+      explain.className = 'oracle-explain';
+      explain.textContent = o.question.gloss;
+      oracleEl.appendChild(explain);
+    }
+
     const pairs = o.pairs || (o.lines || []).map(function (l) { return { ja: l, src: '' }; });
     pairs.forEach(function (p) {
       const pair = document.createElement('span');
       pair.className = 'oracle-pair';
+      const jaRow = document.createElement('span');
+      jaRow.className = 'oracle-ja';
+      const tag = document.createElement('span');
+      tag.className = 'oracle-tag';
+      tag.textContent = p.label || '訳';
+      jaRow.appendChild(tag);
       const ja = document.createElement('span');
       ja.className = 'oracle-line';
       ja.textContent = p.ja;
-      pair.appendChild(ja);
+      jaRow.appendChild(ja);
+      pair.appendChild(jaRow);
       if (p.src) {
         const src = document.createElement('span');
         src.className = 'oracle-src';
-        const tag = document.createElement('span');
-        tag.className = 'oracle-tag';
-        tag.textContent = p.label || '原文';
-        src.appendChild(tag);
-        const srcText = document.createElement('span');
-        srcText.textContent = p.src;
-        src.appendChild(srcText);
+        src.textContent = p.src;
         pair.appendChild(src);
       }
       oracleEl.appendChild(pair);
     });
-    const gloss = document.createElement('span');
-    gloss.className = 'oracle-gloss';
-    gloss.textContent = o.question.gloss;
-    oracleEl.appendChild(gloss);
     oracleEl.hidden = false;
   }
 

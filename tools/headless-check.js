@@ -157,6 +157,11 @@ check('同一シードで同一卜辞',
   CL.buildOracleText({ seed: 7, category: 'work', rank: '吉' }).text ===
   CL.buildOracleText({ seed: 7, category: 'work', rank: '吉' }).text);
 check('出典リストが定義されている', Array.isArray(CL.SOURCES) && CL.SOURCES.length >= 8);
+check('各カテゴリに長い説明文がある',
+  ['overall', 'work', 'love', 'health'].every(function (k) {
+    const q = CL.QUESTIONS[k];
+    return q && q.gloss && q.gloss.length > 50 && q.text && q.src;
+  }));
 
 // 参考: メトリクス実測値の表示（チューニング確認用）
 console.log('\n--- metrics samples (seed 1-3, strength=60, duration=60) ---');
