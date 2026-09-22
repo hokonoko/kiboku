@@ -137,13 +137,13 @@ check('rankOf: 80以上は大吉', CL.rankOf(80) === '大吉' && CL.rankOf(79) =
 check('rankOf: 25未満は不吉', CL.rankOf(24) === '不吉' && CL.rankOf(25) === '並');
 
 const o1 = CL.buildOracleText({ seed: 1, category: 'overall', rank: '吉' });
-check('卜辞が叙辞から始まる', /^[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]卜，.+貞：/.test(o1.lines[0]));
-check('卜辞に命辞が含まれる', o1.lines[0].indexOf('旬亡禍？') >= 0);
-check('卜辞に占辞(王占曰)がある', o1.lines[1] === '王占曰：吉。');
-check('卜辞に驗辞がある', o1.lines[2] === '允亡禍。');
+check('卜辞が叙辞から始まる', /^[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]に卜し、.+が貞す：/.test(o1.lines[0]));
+check('卜辞に命辞が含まれる', o1.lines[0].indexOf('禍はなきや？') >= 0);
+check('卜辞に占辞(王が占って曰く)がある', o1.lines[1] === '王が占って曰く、吉。');
+check('卜辞に驗辞がある', o1.lines[2] === 'まことに禍なし。');
 check('総合は癸日の卜になる', o1.day[0] === '癸');
 const o2 = CL.buildOracleText({ seed: 5, category: 'health', rank: '不吉' });
-check('不吉の占辞・驗辞', o2.lines[1] === '王占曰：不吉。' && o2.lines[2].indexOf('允有禍') >= 0);
+check('不吉の占辞・驗辞', o2.lines[1] === '王が占って曰く、不吉。' && o2.lines[2].indexOf('禍あり') >= 0);
 check('同一シードで同一卜辞',
   CL.buildOracleText({ seed: 7, category: 'work', rank: '吉' }).text ===
   CL.buildOracleText({ seed: 7, category: 'work', rank: '吉' }).text);

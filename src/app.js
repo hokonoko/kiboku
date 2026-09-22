@@ -555,7 +555,7 @@
     const rx = 220, maxW = LW - rx - 24;
     c.fillStyle = '#c9b896';
     c.font = '600 18px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
-    let yy = wrapText(c, '【' + currentPattern.name + '】' + currentPattern.description, rx, LH + 34, maxW, 26);
+    let yy = wrapText(c, '【' + currentPattern.name + '】' + currentPattern.gloss, rx, LH + 34, maxW, 26);
     if (wish) {
       c.fillStyle = '#d9c69a';
       c.font = '600 16px "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif';
